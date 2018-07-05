@@ -8,13 +8,16 @@
 
 import UIKit
 import RealmSwift
-class CategoryViewController: UITableViewController {
+import ChameleonFramework
+class CategoryViewController: SwipeTableTableViewController{
     let realm = try! Realm()
     var category : Results<Category>?
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        tableView.separatorStyle = .none
         loadCategories()
+        
         
     }
 
@@ -28,7 +31,7 @@ class CategoryViewController: UITableViewController {
             
             let newItem = Category()
             newItem.name = textField.text!
-            
+            newItem.colour = UIColor.randomFlat.hexValue()
             //            self.defaults.set(self.itemArray, forKey: "TodoListArray")
            
 
@@ -53,11 +56,17 @@ class CategoryViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
-        
-        
-        cell.textLabel?.text = category?[indexPath.row].name ?? "No Categories Added"
-        
+
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        if let categoryy = category?[indexPath.row]{
+            
+            
+        cell.textLabel?.text = categoryy.name
+        //cell.backgroundColor = UIColor(hexString: category?[indexPath.row].colour ?? "1D9BF6")
+            guard let categoryColor = UIColor(hexString: categoryy.colour) else{fatalError()}
+        cell.backgroundColor = categoryColor
+        cell.textLabel?.textColor = ContrastColorOf(categoryColor, returnFlat: true)
+        }
         return cell
     }
     
@@ -92,4 +101,18 @@ class CategoryViewController: UITableViewController {
         
         tableView.reloadData()
     }
+    
+    //MARK: - Delete data from Swipe
+    override func updateModel(at indexPath: IndexPath) {
+        if let categoryForDeletion = self.category?[indexPath.row]{
+                            do {
+                                try self.realm.write {
+                                    self.realm.delete(categoryForDeletion)
+                                }
+                            }catch{
+            
+                            }
+                        }
+    }
 }
+
